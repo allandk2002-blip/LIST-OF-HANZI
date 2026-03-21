@@ -5,8 +5,6 @@
 <title>Han Cloud v2</title>
 
 <style>
-
-/* 🔥 NHÚNG FONT */
 @font-face {
     font-family: 'FZKai';
     src: url('fonts/FZKai-Z03S.ttf') format('truetype');
@@ -33,8 +31,6 @@ textarea {
     color: #fff;
     border: 1px solid #444;
     padding: 10px;
-    font-size: 16px;
-    resize: none;
 }
 
 .buttons {
@@ -51,10 +47,6 @@ button {
     cursor: pointer;
 }
 
-button:hover {
-    background: #555;
-}
-
 .grid {
     margin-top: 20px;
     display: grid;
@@ -62,7 +54,9 @@ button:hover {
     gap: 10px;
 }
 
+
 .card {
+    position: relative;
     background: #1a1a1a;
     border: 1px solid #333;
     height: 80px;
@@ -70,19 +64,8 @@ button:hover {
     align-items: center;
     justify-content: center;
     font-size: 32px;
-
-    /* 🔥 DÙNG FONT CỦA BẠN */
-    font-family: 'FZKTPY', "Noto Serif SC", serif;
-
+    font-family: 'FZKai', serif;
     cursor: pointer;
-    user-select: text;
-    transition: all 0.2s ease;
-}
-
-.card:hover {
-    background: #222;
-    transform: scale(1.05);
-    box-shadow: 0 0 10px rgba(255,255,255,0.15);
 }
 
 .card.active {
@@ -90,24 +73,71 @@ button:hover {
     color: #000;
 }
 
-.context-menu {
-    position: absolute;
-    background: #222;
-    border: 1px solid #444;
-    padding: 5px 0;
-    display: none;
-    z-index: 1000;
+/* chữ */
+.char {
+    pointer-events: none;
 }
 
-.context-menu div {
-    padding: 8px 16px;
+/* nút tròn */
+.shuffle-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #666;
     cursor: pointer;
 }
 
-.context-menu div:hover {
-    background: #444;
+.shuffle-btn:hover {
+    background: #aaa;
 }
 
+/* PANEL GRID */
+.panel {
+    margin-top: 20px;
+    margin-bottom: 10px; /* thêm dòng này */
+    display: none;
+    gap: 5px;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+}
+
+.panel-item {
+    position: relative;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.panel-item input {
+    width: 100%;
+    height: 100%;
+    background: #222;
+    color: #fff;
+    border: none;
+    text-align: center;
+}
+
+/* nút xóa */
+.delete-btn {
+    position: absolute;
+    top: 0;
+    right: 2px;
+    font-size: 12px;
+    color: red;
+    display: none;
+    cursor: pointer;
+}
+
+.panel-item:hover .delete-btn {
+    display: block;
+}
 </style>
 </head>
 
@@ -115,26 +145,22 @@ button:hover {
 
 <div class="container">
 
-<textarea id="input" placeholder="Nhập chữ Hán... (dùng (学生))"></textarea>
+<textarea id="input" placeholder="Nhập chữ Hán..."></textarea>
 
 <div class="buttons">
     <button onclick="addText()">Thêm</button>
     <button onclick="render()">Shuffle</button>
     <button onclick="clearAll()">Clear</button>
+    <button onclick="togglePanel()">Quản lý</button>
 </div>
 
+<div class="panel" id="panel"></div>
 <div class="grid" id="grid"></div>
 
 </div>
 
-<div id="menu" class="context-menu">
-    <div id="copyBtn">Copy</div>
-    <div id="deleteBtn">Xóa</div>
-</div>
-
 <script>
 let data = JSON.parse(localStorage.getItem("hanzi")) || [];
-let currentTarget = null;
 
 function save() {
     localStorage.setItem("hanzi", JSON.stringify(data));
@@ -154,20 +180,19 @@ function addText() {
 
     while ((match = regex.exec(input)) !== null) {
         if (match[1]) {
-            if ([...match[1]].some(c => isHan(c))) {
-                result.push(match[1]);
-            }
+            if ([...match[1]].some(c => isHan(c))) result.push(match[1]);
         } else {
-            if (isHan(match[0])) {
-                result.push(match[0]);
-            }
+            if (isHan(match[0])) result.push(match[0]);
         }
     }
 
-    data = [...new Set(data.concat(result))];
+    result = result.filter(r => !data.includes(r));
+    data = data.concat(result);
 
     save();
     render();
+    renderPanel();
+
     document.getElementById("input").value = "";
 }
 
@@ -175,81 +200,103 @@ function shuffleArray(arr) {
     return arr.sort(() => Math.random() - 0.5);
 }
 
+function render() {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    let display = shuffleArray([...data]).slice(0, 50);
+
+    display.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        const charSpan = document.createElement("span");
+        charSpan.className = "char";
+        charSpan.textContent = item;
+
+        const btn = document.createElement("div");
+        btn.className = "shuffle-btn";
+
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            charSpan.textContent = data[Math.floor(Math.random() * data.length)];
+        };
+
+        div.onclick = () => {
+            div.classList.toggle("active");
+        };
+
+        div.appendChild(charSpan);
+        div.appendChild(btn);
+        grid.appendChild(div);
+    });
+}
+
+/* PANEL GRID 12 CỘT */
+
+function togglePanel() {
+    const panel = document.getElementById("panel");
+    panel.style.display = panel.style.display === "none" ? "grid" : "none";
+}
+
+function renderPanel() {
+    const panel = document.getElementById("panel");
+    panel.innerHTML = "";
+
+    data.forEach((item, index) => {
+        const cell = document.createElement("div");
+        cell.className = "panel-item";
+
+        const span = document.createElement("span");
+        span.textContent = item;
+
+        // edit
+        span.onclick = () => {
+            const input = document.createElement("input");
+            input.value = item;
+
+            input.onblur = () => {
+                data[index] = input.value.trim() || item;
+                save();
+                render();
+                renderPanel();
+            };
+
+            cell.innerHTML = "";
+            cell.appendChild(input);
+            input.focus();
+        };
+
+        // delete
+        const del = document.createElement("div");
+        del.className = "delete-btn";
+        del.textContent = "✕";
+
+        del.onclick = (e) => {
+            e.stopPropagation();
+            data.splice(index, 1);
+            save();
+            render();
+            renderPanel();
+        };
+
+        cell.appendChild(span);
+        cell.appendChild(del);
+        panel.appendChild(cell);
+    });
+}
+
 function clearAll() {
     if (confirm("Xóa toàn bộ?")) {
         data = [];
         save();
         render();
+        renderPanel();
     }
 }
 
-function render() {
-    const grid = document.getElementById("grid");
-    grid.innerHTML = "";
-
-    let uniqueData = [...new Set(data)];
-    let display = shuffleArray(uniqueData).slice(0, 50);
-
-    display.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.textContent = item;
-
-        div.dataset.state = "0";
-
-        div.onclick = () => {
-            let state = div.dataset.state;
-
-            if (state === "0") {
-                div.classList.add("active");
-                div.dataset.state = "1";
-            } else {
-                if (data.length > 0) {
-                    let random = data[Math.floor(Math.random() * data.length)];
-                    div.textContent = random;
-                }
-                div.classList.remove("active");
-                div.dataset.state = "0";
-            }
-        };
-
-        div.oncontextmenu = (e) => {
-            e.preventDefault();
-            currentTarget = div;
-
-            const menu = document.getElementById("menu");
-            menu.style.top = e.pageY + "px";
-            menu.style.left = e.pageX + "px";
-            menu.style.display = "block";
-        };
-
-        grid.appendChild(div);
-    });
-}
-
-document.getElementById("copyBtn").onclick = () => {
-    if (!currentTarget) return;
-    navigator.clipboard.writeText(currentTarget.textContent);
-    hideMenu();
-};
-
-document.getElementById("deleteBtn").onclick = () => {
-    if (!currentTarget) return;
-
-    let value = currentTarget.textContent;
-    data = data.filter(v => v !== value);
-    save();
-    render();
-    hideMenu();
-};
-
-function hideMenu() {
-    document.getElementById("menu").style.display = "none";
-}
-
-window.onclick = () => hideMenu();
-
 render();
+renderPanel();
 </script>
 
 </body>
