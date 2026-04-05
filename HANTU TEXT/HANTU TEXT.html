@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Han Cloud v2</title>
+<title>Han Cloud v6</title>
+
+<!-- ROBOTO -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
 <style>
 @font-face {
@@ -23,18 +26,26 @@ body {
     max-width: 900px;
     margin: auto;
     padding-top: 40px;
-    padding-bottom: 40px;
 }
 
-textarea {
+/* INPUT */
+#input {
     width: 100%;
-    height: 80px;
+    min-height: 80px;
     background: #222;
     color: #fff;
     border: 1px solid #444;
     padding: 10px;
+    outline: none;
 }
 
+/* highlight chữ mới */
+mark.new {
+    background: white;
+    color: black;
+}
+
+/* buttons */
 .buttons {
     margin-top: 10px;
     display: flex;
@@ -49,13 +60,13 @@ button {
     cursor: pointer;
 }
 
+/* GRID 6 CỘT */
 .grid {
     margin-top: 20px;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
 }
-
 
 .card {
     position: relative;
@@ -66,8 +77,8 @@ button {
     align-items: center;
     justify-content: center;
     font-size: 40px;
-    font-family: 'FZKai', serif;
     cursor: pointer;
+    font-family: 'FZKai', 'KaiTi', 'STKaiti', serif;
 }
 
 .card.active {
@@ -75,12 +86,6 @@ button {
     color: #000;
 }
 
-/* chữ */
-.char {
-    pointer-events: none;
-}
-
-/* nút tròn */
 .shuffle-btn {
     position: absolute;
     top: 5px;
@@ -92,18 +97,12 @@ button {
     cursor: pointer;
 }
 
-.shuffle-btn:hover {
-    background: #aaa;
-}
-
-/* PANEL GRID */
+/* PANEL dùng ROBOTO */
 .panel {
     margin-top: 20px;
-    margin-bottom: 10px; /* thêm dòng này */
     display: none;
-    gap: 5px;
-    display: grid;
     grid-template-columns: repeat(12, 1fr);
+    gap: 5px;
 }
 
 .panel-item {
@@ -115,18 +114,9 @@ button {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    font-family: 'Roboto', sans-serif;
 }
 
-.panel-item input {
-    width: 100%;
-    height: 100%;
-    background: #222;
-    color: #fff;
-    border: none;
-    text-align: center;
-}
-
-/* nút xóa */
 .delete-btn {
     position: absolute;
     top: 0;
@@ -147,13 +137,14 @@ button {
 
 <div class="container">
 
-<textarea id="input" placeholder="Nhập chữ Hán..."></textarea>
+<div id="input" contenteditable="true"></div>
 
 <div class="buttons">
     <button onclick="addText()">Thêm</button>
     <button onclick="render()">Shuffle</button>
     <button onclick="clearAll()">Clear</button>
     <button onclick="togglePanel()">Quản lý</button>
+    <button onclick="copyAll()">Copy All</button>
 </div>
 
 <div class="panel" id="panel"></div>
@@ -162,7 +153,8 @@ button {
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("hanzi")) || [];
+let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
+let pinned = null;
 
 function save() {
     localStorage.setItem("hanzi", JSON.stringify(data));
@@ -172,70 +164,84 @@ function isHan(char) {
     return /[\u4e00-\u9fff]/.test(char);
 }
 
-function addText() {
-    const input = document.getElementById("input").value.trim();
-    if (!input) return;
+/* ===== HIGHLIGHT CHỈ CHỮ MỚI ===== */
+document.getElementById("input").addEventListener("input", () => {
+    const el = document.getElementById("input");
+    const text = el.innerText;
 
-    let result = [];
-    const regex = /\((.*?)\)|./g;
-    let match;
-
-    while ((match = regex.exec(input)) !== null) {
-        if (match[1]) {
-            if ([...match[1]].some(c => isHan(c))) result.push(match[1]);
+    let result = "";
+    for (let char of text) {
+        if (!isHan(char)) {
+            result += char;
+        } else if (!data.includes(char)) {
+            result += `<mark class="new">${char}</mark>`;
         } else {
-            if (isHan(match[0])) result.push(match[0]);
+            result += char;
         }
     }
 
-    result = result.filter(r => !data.includes(r));
-    data = data.concat(result);
+    el.innerHTML = result;
+
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+});
+
+/* ===== ADD ===== */
+function addText() {
+    const text = document.getElementById("input").innerText;
+
+    let arr = [...text].filter(c => isHan(c));
+
+    data = Array.from(new Set([...data, ...arr]));
 
     save();
     render();
     renderPanel();
 
-    document.getElementById("input").value = "";
+    document.getElementById("input").innerHTML = "";
 }
 
-function shuffleArray(arr) {
-    return arr.sort(() => Math.random() - 0.5);
-}
-
+/* ===== GRID ===== */
 function render() {
     const grid = document.getElementById("grid");
     grid.innerHTML = "";
 
-    let display = shuffleArray([...data]).slice(0, 50);
+    let display = [...data];
+
+    if (pinned) {
+        display = [pinned, ...display.filter(x => x !== pinned)];
+    }
+
+    display = display.sort(() => Math.random() - 0.5).slice(0, 60);
 
     display.forEach((item) => {
         const div = document.createElement("div");
         div.className = "card";
-
-        const charSpan = document.createElement("span");
-        charSpan.className = "char";
-        charSpan.textContent = item;
+        div.textContent = item;
 
         const btn = document.createElement("div");
         btn.className = "shuffle-btn";
 
         btn.onclick = (e) => {
             e.stopPropagation();
-            charSpan.textContent = data[Math.floor(Math.random() * data.length)];
+            div.textContent = data[Math.floor(Math.random() * data.length)];
+            div.appendChild(btn);
         };
 
         div.onclick = () => {
             div.classList.toggle("active");
         };
 
-        div.appendChild(charSpan);
         div.appendChild(btn);
         grid.appendChild(div);
     });
 }
 
-/* PANEL GRID 12 CỘT */
-
+/* ===== PANEL ===== */
 function togglePanel() {
     const panel = document.getElementById("panel");
     panel.style.display = panel.style.display === "none" ? "grid" : "none";
@@ -248,28 +254,13 @@ function renderPanel() {
     data.forEach((item, index) => {
         const cell = document.createElement("div");
         cell.className = "panel-item";
+        cell.textContent = item;
 
-        const span = document.createElement("span");
-        span.textContent = item;
-
-        // edit
-        span.onclick = () => {
-            const input = document.createElement("input");
-            input.value = item;
-
-            input.onblur = () => {
-                data[index] = input.value.trim() || item;
-                save();
-                render();
-                renderPanel();
-            };
-
-            cell.innerHTML = "";
-            cell.appendChild(input);
-            input.focus();
+        cell.onclick = () => {
+            pinned = item;
+            render();
         };
 
-        // delete
         const del = document.createElement("div");
         del.className = "delete-btn";
         del.textContent = "✕";
@@ -277,20 +268,38 @@ function renderPanel() {
         del.onclick = (e) => {
             e.stopPropagation();
             data.splice(index, 1);
+            data = Array.from(new Set(data));
             save();
             render();
             renderPanel();
         };
 
-        cell.appendChild(span);
         cell.appendChild(del);
         panel.appendChild(cell);
     });
 }
 
+/* ===== COPY ALL ===== */
+function copyAll() {
+    const text = data.join(" ");
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+
+    textarea.select();
+    document.execCommand("copy");
+
+    document.body.removeChild(textarea);
+
+    alert("Đã copy!");
+}
+
+/* ===== CLEAR ===== */
 function clearAll() {
     if (confirm("Xóa toàn bộ?")) {
         data = [];
+        pinned = null;
         save();
         render();
         renderPanel();
