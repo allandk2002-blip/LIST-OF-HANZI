@@ -134,6 +134,62 @@ button {
 .panel-item:hover .delete-btn {
     display: block;
 }
+
+/* ===== RANDOM MODAL ===== */
+
+.random-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.random-content {
+    position: relative;
+    width: 500px;
+    height: 300px;
+    background: #111;
+    border: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.random-word {
+    font-size: 120px;
+    color: #fff;
+    font-family: 'FZKai', 'KaiTi', 'STKaiti', serif;
+}
+
+.arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 40px;
+    color: #aaa;
+    cursor: pointer;
+    user-select: none;
+}
+
+.arrow:hover {
+    color: #fff;
+}
+
+.arrow.left {
+    left: 10px;
+}
+
+.arrow.right {
+    right: 10px;
+}
+
+.arrow.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
 </style>
 </head>
 
@@ -149,6 +205,7 @@ button {
     <button onclick="clearAll()">Clear</button>
     <button onclick="togglePanel()">Quản lý</button>
     <button onclick="copyAll()">Copy All</button>
+    <button id="randomBtn">🎲 Random</button>
 </div>
 
 <div class="panel" id="panel"></div>
@@ -329,7 +386,99 @@ function clearAll() {
 
 render();
 renderPanel();
-</script>
+const randomBtn = document.getElementById("randomBtn");
+const modal = document.getElementById("randomModal");
+const wordEl = document.getElementById("randomWord");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
 
+let words = [];
+let history = [];
+let currentIndex = -1;
+
+function getWords() {
+    const items = document.querySelectorAll(".panel-item");
+    words = Array.from(items).map(el => el.textContent.trim()).filter(Boolean);
+}
+
+function getRandomWord() {
+    if (words.length === 0) return "";
+
+    let pool = words;
+
+    if (words.length > 10 && history.length >= 10) {
+        const recent = history.slice(-10);
+        pool = words.filter(w => !recent.includes(w));
+        if (pool.length === 0) pool = words;
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function showWord(word) {
+    wordEl.textContent = word;
+}
+
+function updateButtons() {
+    if (currentIndex <= 0) {
+        prevBtn.classList.add("disabled");
+    } else {
+        prevBtn.classList.remove("disabled");
+    }
+}
+
+function nextWord() {
+    const word = getRandomWord();
+
+    if (currentIndex < history.length - 1) {
+        history = history.slice(0, currentIndex + 1);
+    }
+
+    history.push(word);
+    currentIndex++;
+
+    showWord(word);
+    updateButtons();
+}
+
+function prevWord() {
+    if (currentIndex <= 0) return;
+
+    currentIndex--;
+    showWord(history[currentIndex]);
+    updateButtons();
+}
+
+randomBtn.onclick = () => {
+    getWords();
+    if (words.length === 0) return;
+
+    modal.style.display = "flex";
+
+    history = [];
+    currentIndex = -1;
+
+    nextWord();
+};
+
+nextBtn.onclick = nextWord;
+prevBtn.onclick = prevWord;
+
+modal.onclick = (e) => {
+    if (e.target === modal) {
+        modal.style.display = "none";
+    }
+};
+</script>
+<div id="randomModal" class="random-modal">
+    <div class="random-content">
+        <div class="arrow left" id="prevBtn">❮</div>
+
+        <div class="random-word" id="randomWord">字</div>
+
+        <div class="arrow right" id="nextBtn">❯</div>
+    </div>
+</div>
+    
 </body>
 </html>
