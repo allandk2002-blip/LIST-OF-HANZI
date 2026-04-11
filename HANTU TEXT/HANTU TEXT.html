@@ -213,6 +213,18 @@ button {
 
 </div>
 
+<div id="randomModal" class="random-modal">
+    <div class="random-content">
+        <div class="arrow left" id="prevBtn">❮</div>
+
+        <div class="random-word" id="randomWord">字</div>
+
+        <div class="arrow right" id="nextBtn">❯</div>
+    </div>
+</div>
+
+
+
 <script>
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
 let pinned = null;
@@ -470,15 +482,5 @@ modal.onclick = (e) => {
     }
 };
 </script>
-<div id="randomModal" class="random-modal">
-    <div class="random-content">
-        <div class="arrow left" id="prevBtn">❮</div>
-
-        <div class="random-word" id="randomWord">字</div>
-
-        <div class="arrow right" id="nextBtn">❯</div>
-    </div>
-</div>
-    
 </body>
 </html>
