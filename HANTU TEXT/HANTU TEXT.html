@@ -242,7 +242,7 @@ function highlightPanelFromInput(text) {
     const chars = new Set([...text].filter(c => isHan(c)));
 
     document.querySelectorAll(".panel-item").forEach(cell => {
-        const char = cell.textContent.replace("✕", "").trim();
+        const char = cell.textContent.replace("O", "").trim();
 
         if (chars.has(char) && data.includes(char)) {
             cell.classList.add("highlight");
