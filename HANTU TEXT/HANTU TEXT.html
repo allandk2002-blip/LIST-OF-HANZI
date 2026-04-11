@@ -421,7 +421,7 @@ let currentIndex = -1;
 
 function getWords() {
     const items = document.querySelectorAll(".panel-item");
-    words = Array.from(items).map(el => el.textContent.trim()).filter(Boolean);
+    words = Array.from(items).map(el => el.childNodes[0]?.nodeValue.trim()).filter(Boolean);
 }
 
 function getRandomWord() {
