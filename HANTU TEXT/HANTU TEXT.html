@@ -190,8 +190,31 @@ button {
     opacity: 0.3;
     pointer-events: none;
 }
+
+/* ===== HANZI WRITER POPUP ===== */
+
+.writer-popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.writer-box {
+    width: 220px;
+    height: 220px;
+    background: #fff;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+    
 </style>
-<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script
 </head>
 
 <body>
@@ -223,19 +246,10 @@ button {
     </div>
 </div>
 
-<div id="writerModal" class="random-modal">
-    <div class="random-content" style="flex-direction: column; gap: 10px;">
-
-        <div id="writerTarget" style="width: 300px; height: 300px;"></div>
-
-        <div>
-            <button id="animateBtn">Animate</button>
-            <button id="quizBtn">Quiz</button>
-        </div>
-
-    </div>
-</div>
-
+<div id="writerPopup" class="writer-popup">
+    <div class="writer-box" id="writerBox"></div>
+</div>    
+    
 <script>
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
 let pinned = null;
@@ -335,7 +349,7 @@ function render() {
 
         div.onclick = () => {
             div.classList.toggle("active");
-            openWriter(div.textContent);
+            showWriter(div.textContent.trim());
         };
 
         div.appendChild(btn);
@@ -361,7 +375,7 @@ function renderPanel() {
         cell.onclick = () => {
             pinned = item;
             render();
-            openWriter(item);
+            showWriter(item);
         };
 
         const del = document.createElement("div");
@@ -494,49 +508,46 @@ modal.onclick = (e) => {
         modal.style.display = "none";
     }
 };
-/* ===== HANZI WRITER ===== */
 
-const writerModal = document.getElementById("writerModal");
-const writerTarget = document.getElementById("writerTarget");
-const animateBtn = document.getElementById("animateBtn");
-const quizBtn = document.getElementById("quizBtn");
+/* ===== HANZI WRITER LOGIC ===== */
+
+const writerPopup = document.getElementById("writerPopup");
+const writerBox = document.getElementById("writerBox");
 
 let writer = null;
 
-// mở writer
-function openWriter(char) {
-    writerModal.style.display = "flex";
+// mở popup + vẽ chữ
+function showWriter(char) {
+    writerPopup.style.display = "flex";
+    writerBox.innerHTML = "";
 
-    writerTarget.innerHTML = "";
-
-    writer = HanziWriter.create(writerTarget, char, {
-        width: 300,
-        height: 300,
+    writer = HanziWriter.create(writerBox, char, {
+        width: 200,
+        height: 200,
         padding: 5,
         showOutline: true,
         strokeAnimationSpeed: 1,
-        delayBetweenStrokes: 200
+        delayBetweenStrokes: 200,
+        strokeColor: "#000"
     });
 
-    writer.animateCharacter();
+    // loop animation
+    function loop() {
+        writer.animateCharacter({
+            onComplete: loop
+        });
+    }
+
+    loop();
 }
 
-// animate lại
-animateBtn.onclick = () => {
-    if (writer) writer.animateCharacter();
-};
-
-// quiz mode
-quizBtn.onclick = () => {
-    if (writer) writer.quiz();
-};
-
-// click ngoài đóng
-writerModal.onclick = (e) => {
-    if (e.target === writerModal) {
-        writerModal.style.display = "none";
+// đóng khi click ngoài
+writerPopup.onclick = (e) => {
+    if (e.target === writerPopup) {
+        writerPopup.style.display = "none";
     }
 };
+
 </script>
 </body>
 </html>
