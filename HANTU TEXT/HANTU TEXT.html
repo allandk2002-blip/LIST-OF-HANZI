@@ -191,27 +191,6 @@ button {
     pointer-events: none;
 }
 
-/* ===== HANZI WRITER POPUP ===== */
-
-.writer-popup {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.writer-box {
-    width: 220px;
-    height: 220px;
-    background: #fff;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
     
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script
@@ -246,9 +225,17 @@ button {
     </div>
 </div>
 
-<div id="writerPopup" class="writer-popup">
-    <div class="writer-box" id="writerBox"></div>
-</div>    
+<div id="hanzi-popup" style="
+  position:absolute;
+  display:none;
+  background:white;
+  border-radius:10px;
+  padding:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.3);
+  z-index:999;
+">
+  <div id="hanzi-target" style="width:150px;height:150px;"></div>
+</div>
     
 <script>
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
@@ -349,7 +336,6 @@ function render() {
 
         div.onclick = () => {
             div.classList.toggle("active");
-            showWriter(div.textContent.trim());
         };
 
         div.appendChild(btn);
@@ -375,7 +361,6 @@ function renderPanel() {
         cell.onclick = () => {
             pinned = item;
             render();
-            showWriter(item);
         };
 
         const del = document.createElement("div");
@@ -509,45 +494,61 @@ modal.onclick = (e) => {
     }
 };
 
-/* ===== HANZI WRITER LOGIC ===== */
-
-const writerPopup = document.getElementById("writerPopup");
-const writerBox = document.getElementById("writerBox");
-
+<script>
 let writer = null;
 
-// mở popup + vẽ chữ
-function showWriter(char) {
-    writerPopup.style.display = "flex";
-    writerBox.innerHTML = "";
+// 👉 Hiển thị chữ
+function showHanzi(char, x, y){
+    let popup = document.getElementById("hanzi-popup");
+    let target = document.getElementById("hanzi-target");
 
-    writer = HanziWriter.create(writerBox, char, {
-        width: 200,
-        height: 200,
-        padding: 5,
+    popup.style.display = "block";
+    popup.style.left = x + "px";
+    popup.style.top = y + "px";
+
+    target.innerHTML = "";
+
+    writer = HanziWriter.create('hanzi-target', char, {
+        width: 150,
+        height: 150,
         showOutline: true,
         strokeAnimationSpeed: 1,
-        delayBetweenStrokes: 200,
-        strokeColor: "#000"
+        delayBetweenStrokes: 200
     });
 
-    // loop animation
-    function loop() {
-        writer.animateCharacter({
-            onComplete: loop
-        });
-    }
-
-    loop();
+    writer.animateCharacter();
 }
 
-// đóng khi click ngoài
-writerPopup.onclick = (e) => {
-    if (e.target === writerPopup) {
-        writerPopup.style.display = "none";
-    }
-};
+// 👉 CLICK vào ô card
+document.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", function(e){
+        let char = this.innerText.trim();
+        if(!char) return;
 
+        showHanzi(char, e.pageX, e.pageY);
+    });
+});
+
+// 👉 CLICK vào panel-item
+document.querySelectorAll(".panel-item").forEach(item => {
+    item.addEventListener("click", function(e){
+        let char = this.innerText.trim();
+        if(!char) return;
+
+        showHanzi(char, e.pageX, e.pageY);
+    });
+});
+
+// 👉 click ra ngoài thì tắt
+document.addEventListener("click", function(e){
+    if(!e.target.closest("#hanzi-popup") &&
+       !e.target.closest(".card") &&
+       !e.target.closest(".panel-item")){
+        document.getElementById("hanzi-popup").style.display = "none";
+    }
+});
+</script>
+    
 </script>
 </body>
 </html>
