@@ -335,7 +335,6 @@ function render() {
 
         div.onclick = () => {
             div.classList.toggle("active");
-            openWriter(div.textContent);
         };
 
         div.appendChild(btn);
@@ -361,7 +360,6 @@ function renderPanel() {
         cell.onclick = () => {
             pinned = item;
             render();
-            openWriter(item);
         };
 
         const del = document.createElement("div");
@@ -492,49 +490,6 @@ prevBtn.onclick = prevWord;
 modal.onclick = (e) => {
     if (e.target === modal) {
         modal.style.display = "none";
-    }
-};
-/* ===== HANZI WRITER ===== */
-
-const writerModal = document.getElementById("writerModal");
-const writerTarget = document.getElementById("writerTarget");
-const animateBtn = document.getElementById("animateBtn");
-const quizBtn = document.getElementById("quizBtn");
-
-let writer = null;
-
-// mở writer
-function openWriter(char) {
-    writerModal.style.display = "flex";
-
-    writerTarget.innerHTML = "";
-
-    writer = HanziWriter.create(writerTarget, char, {
-        width: 300,
-        height: 300,
-        padding: 5,
-        showOutline: true,
-        strokeAnimationSpeed: 1,
-        delayBetweenStrokes: 200
-    });
-
-    writer.animateCharacter();
-}
-
-// animate lại
-animateBtn.onclick = () => {
-    if (writer) writer.animateCharacter();
-};
-
-// quiz mode
-quizBtn.onclick = () => {
-    if (writer) writer.quiz();
-};
-
-// click ngoài đóng
-writerModal.onclick = (e) => {
-    if (e.target === writerModal) {
-        writerModal.style.display = "none";
     }
 };
 </script>
