@@ -437,6 +437,11 @@ let reviewHistory = [];
 let reviewIndex = -1;
 
 function getWords() {
+    if (reviewWords.length > 0) {
+        words = [...reviewWords];
+        return;
+    }
+
     const items = document.querySelectorAll(".panel-item");
     words = Array.from(items).map(el => el.childNodes[0]?.nodeValue.trim()).filter(Boolean);
 }
@@ -502,7 +507,7 @@ randomBtn.onclick = () => {
 };
 
 nextBtn.onclick = () => {
-    if (reviewMode === false && reviewWords.length > 0) {
+    if (reviewWords.length > 0) {
         nextReviewWord();
     } else {
         nextWord();
@@ -510,7 +515,7 @@ nextBtn.onclick = () => {
 };
 
 prevBtn.onclick = () => {
-    if (reviewMode === false && reviewWords.length > 0) {
+    if (reviewWords.length > 0) {
         prevReviewWord();
     } else {
         prevWord();
@@ -521,25 +526,38 @@ modal.onclick = (e) => {
     if (e.target === modal) {
         modal.style.display = "none";
 
-        reviewWords = [];
-        reviewHistory = [];
-        reviewIndex = -1;
-
         wordEl.style.color = "#fff"; // reset màu
     }
 };
 
 function startReview() {
+    const btn = event.target;
+
+    // Nếu đang bật → hỏi tắt
+    if (reviewMode) {
+        if (!confirm("Thoát chế độ review?")) return;
+
+        reviewMode = false;
+        selectedReview.clear();
+        reviewWords = [];
+
+        // reset highlight
+        document.querySelectorAll(".panel-item").forEach(el => {
+            el.classList.remove("highlight");
+        });
+
+        btn.textContent = "Review";
+        document.getElementById("confirmReviewBtn").style.display = "none";
+        return;
+    }
+
+    // Bật review mode
     reviewMode = true;
-    selectedReview.clear();
 
     document.getElementById("panel").style.display = "grid";
     document.getElementById("confirmReviewBtn").style.display = "inline-block";
 
-    // reset highlight cũ
-    document.querySelectorAll(".panel-item").forEach(el => {
-        el.classList.remove("highlight");
-    });
+    btn.textContent = "Ngưng Review";
 }
 
 function confirmReview() {
@@ -552,9 +570,6 @@ function confirmReview() {
 
     reviewHistory = [];
     reviewIndex = -1;
-
-    reviewMode = false;
-    document.getElementById("confirmReviewBtn").style.display = "none";
 
     startReviewSession();
 }
