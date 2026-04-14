@@ -178,6 +178,10 @@ button {
     color: #fff;
 }
 
+.random-word.review {
+    color: #c084fc;
+}
+
 .arrow.left {
     left: 10px;
 }
@@ -206,6 +210,9 @@ button {
     <button onclick="togglePanel()">Quản lý</button>
     <button onclick="copyAll()">Copy All</button>
     <button id="randomBtn">🎲 Random</button>
+    <button id="reviewBtn">🧠 Review</button>
+    <button id="confirmReviewBtn" style="display:none;">✅ Xác nhận</button>
+    
 </div>
 
 <div class="panel" id="panel"></div>
@@ -239,6 +246,10 @@ button {
 <script>
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
 let pinned = null;
+let reviewMode = false;
+let reviewWords = [];
+let reviewHistory = [];
+let reviewIndex = -1;
 
 function save() {
     localStorage.setItem("hanzi", JSON.stringify(data));
@@ -358,21 +369,21 @@ function renderPanel() {
         cell.textContent = item;
 
         cell.onclick = () => {
-            pinned = item;
-            render();
-        };
-
-        const del = document.createElement("div");
-        del.className = "delete-btn";
-        del.textContent = "✕";
-
-        del.onclick = (e) => {
-            e.stopPropagation();
-            data.splice(index, 1);
-            data = Array.from(new Set(data));
-            save();
-            render();
-            renderPanel();
+            if (reviewMode) {
+                cell.classList.toggle("highlight");
+        
+                const char = item;
+        
+                if (reviewWords.includes(char)) {
+                    reviewWords = reviewWords.filter(x => x !== char);
+                } else {
+                    reviewWords.push(char);
+                }
+        
+            } else {
+                pinned = item;
+                render();
+            }
         };
 
         cell.appendChild(del);
@@ -484,14 +495,82 @@ randomBtn.onclick = () => {
     nextWord();
 };
 
-nextBtn.onclick = nextWord;
-prevBtn.onclick = prevWord;
+nextBtn.onclick = () => {
+    if (wordEl.classList.contains("review")) {
+        nextReviewWord();
+    } else {
+        nextWord();
+    }
+};
+
+prevBtn.onclick = () => {
+    if (wordEl.classList.contains("review")) {
+        prevReviewWord();
+    } else {
+        prevWord();
+    }
+};
 
 modal.onclick = (e) => {
     if (e.target === modal) {
         modal.style.display = "none";
+        wordEl.classList.remove("review");
     }
 };
+
+const reviewBtn = document.getElementById("reviewBtn");
+const confirmReviewBtn = document.getElementById("confirmReviewBtn");
+
+reviewBtn.onclick = () => {
+    reviewMode = true;
+    reviewWords = [];
+
+    document.getElementById("panel").style.display = "grid";
+    confirmReviewBtn.style.display = "inline-block";
+
+    document.querySelectorAll(".panel-item").forEach(el => {
+        el.classList.remove("highlight");
+    });
+};
+
+function getReviewRandomWord() {
+    if (reviewWords.length === 0) return "";
+
+    let pool = reviewWords;
+
+    let Y = Math.floor(reviewWords.length / 3);
+
+    if (reviewWords.length > 3 && reviewHistory.length >= Y) {
+        const recent = reviewHistory.slice(-Y);
+        pool = reviewWords.filter(w => !recent.includes(w));
+        if (pool.length === 0) pool = reviewWords;
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function nextReviewWord() {
+    const word = getReviewRandomWord();
+
+    if (reviewIndex < reviewHistory.length - 1) {
+        reviewHistory = reviewHistory.slice(0, reviewIndex + 1);
+    }
+
+    reviewHistory.push(word);
+    reviewIndex++;
+
+    showWord(word);
+    updateButtons();
+}
+
+function prevReviewWord() {
+    if (reviewIndex <= 0) return;
+
+    reviewIndex--;
+    showWord(reviewHistory[reviewIndex]);
+    updateButtons();
+}
+    
 </script>
 </body>
 </html>
