@@ -206,6 +206,8 @@ button {
     <button onclick="togglePanel()">Quản lý</button>
     <button onclick="copyAll()">Copy All</button>
     <button id="randomBtn">🎲 Random</button>
+    <button onclick="startReview()">Review</button>
+    <button id="confirmReviewBtn" style="display:none;" onclick="confirmReview()">Xác nhận</button>
 </div>
 
 <div class="panel" id="panel"></div>
@@ -358,8 +360,18 @@ function renderPanel() {
         cell.textContent = item;
 
         cell.onclick = () => {
-            pinned = item;
-            render();
+            if (reviewMode) {
+                if (selectedReview.has(item)) {
+                    selectedReview.delete(item);
+                    cell.classList.remove("highlight");
+                } else {
+                    selectedReview.add(item);
+                    cell.classList.add("highlight");
+                }
+            } else {
+                pinned = item;
+                render();
+            }
         };
 
         const del = document.createElement("div");
@@ -418,6 +430,11 @@ const nextBtn = document.getElementById("nextBtn");
 let words = [];
 let history = [];
 let currentIndex = -1;
+let reviewMode = false;
+let selectedReview = new Set();
+let reviewWords = [];
+let reviewHistory = [];
+let reviewIndex = -1;
 
 function getWords() {
     const items = document.querySelectorAll(".panel-item");
@@ -484,14 +501,110 @@ randomBtn.onclick = () => {
     nextWord();
 };
 
-nextBtn.onclick = nextWord;
-prevBtn.onclick = prevWord;
+nextBtn.onclick = () => {
+    if (reviewMode === false && reviewWords.length > 0) {
+        nextReviewWord();
+    } else {
+        nextWord();
+    }
+};
+
+prevBtn.onclick = () => {
+    if (reviewMode === false && reviewWords.length > 0) {
+        prevReviewWord();
+    } else {
+        prevWord();
+    }
+};
 
 modal.onclick = (e) => {
     if (e.target === modal) {
         modal.style.display = "none";
+
+        reviewWords = [];
+        reviewHistory = [];
+        reviewIndex = -1;
+
+        wordEl.style.color = "#fff"; // reset màu
     }
 };
+
+function startReview() {
+    reviewMode = true;
+    selectedReview.clear();
+
+    document.getElementById("panel").style.display = "grid";
+    document.getElementById("confirmReviewBtn").style.display = "inline-block";
+
+    // reset highlight cũ
+    document.querySelectorAll(".panel-item").forEach(el => {
+        el.classList.remove("highlight");
+    });
+}
+
+function confirmReview() {
+    if (selectedReview.size === 0) {
+        alert("Chọn ít nhất 1 chữ!");
+        return;
+    }
+
+    reviewWords = Array.from(selectedReview);
+
+    reviewHistory = [];
+    reviewIndex = -1;
+
+    reviewMode = false;
+    document.getElementById("confirmReviewBtn").style.display = "none";
+
+    startReviewSession();
+}
+
+function getReviewWord() {
+    if (reviewWords.length === 0) return "";
+
+    let pool = reviewWords;
+
+    const Y = Math.floor(reviewWords.length / 3);
+
+    if (reviewHistory.length >= Y && Y > 0) {
+        const recent = reviewHistory.slice(-Y);
+        pool = reviewWords.filter(w => !recent.includes(w));
+        if (pool.length === 0) pool = reviewWords;
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function startReviewSession() {
+    modal.style.display = "flex";
+
+    wordEl.style.color = "#c084fc"; // tím nhạt
+
+    nextReviewWord();
+}
+
+function nextReviewWord() {
+    const word = getReviewWord();
+
+    if (reviewIndex < reviewHistory.length - 1) {
+        reviewHistory = reviewHistory.slice(0, reviewIndex + 1);
+    }
+
+    reviewHistory.push(word);
+    reviewIndex++;
+
+    showWord(word);
+    updateButtons();
+}
+
+function prevReviewWord() {
+    if (reviewIndex <= 0) return;
+
+    reviewIndex--;
+    showWord(reviewHistory[reviewIndex]);
+    updateButtons();
+}
+  
 </script>
 </body>
 </html>
