@@ -190,11 +190,6 @@ button {
     opacity: 0.3;
     pointer-events: none;
 }
-
-.random-word.review {
-    color: #c084fc;
-}
-    
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 </head>
@@ -211,8 +206,6 @@ button {
     <button onclick="togglePanel()">Quản lý</button>
     <button onclick="copyAll()">Copy All</button>
     <button id="randomBtn">🎲 Random</button>
-    <button id="reviewBtn">🧠 Review</button>
-    <button id="confirmReviewBtn" style="display:none;">✅ Xác nhận</button>
 </div>
 
 <div class="panel" id="panel"></div>
@@ -499,136 +492,6 @@ modal.onclick = (e) => {
         modal.style.display = "none";
     }
 };
-
-/* ===== REVIEW MODE ===== */
-let reviewMode = false;
-let reviewWords = [];
-let reviewHistory = [];
-let reviewIndex = -1;
-
-const reviewBtn = document.getElementById("reviewBtn");
-const confirmReviewBtn = document.getElementById("confirmReviewBtn");
-
-/* bật mode chọn */
-reviewBtn.onclick = () => {
-    reviewMode = true;
-    reviewWords = [];
-
-    document.getElementById("panel").style.display = "grid";
-    confirmReviewBtn.style.display = "inline-block";
-
-    document.querySelectorAll(".panel-item").forEach(el => {
-        el.classList.remove("highlight");
-    });
-};
-
-/* sửa panel click */
-const oldRenderPanel = renderPanel;
-renderPanel = function () {
-    oldRenderPanel();
-
-    document.querySelectorAll(".panel-item").forEach((cell, index) => {
-        const char = data[index];
-
-        cell.onclick = () => {
-            if (reviewMode) {
-                cell.classList.toggle("highlight");
-
-                if (reviewWords.includes(char)) {
-                    reviewWords = reviewWords.filter(x => x !== char);
-                } else {
-                    reviewWords.push(char);
-                }
-            } else {
-                pinned = char;
-                render();
-            }
-        };
-    });
-};
-
-/* random review có chống lặp */
-function getReviewRandomWord() {
-    if (reviewWords.length === 0) return "";
-
-    let pool = reviewWords;
-    let Y = Math.floor(reviewWords.length / 3);
-
-    if (reviewWords.length > 3 && reviewHistory.length >= Y) {
-        const recent = reviewHistory.slice(-Y);
-        pool = reviewWords.filter(w => !recent.includes(w));
-        if (pool.length === 0) pool = reviewWords;
-    }
-
-    return pool[Math.floor(Math.random() * pool.length)];
-}
-
-/* next review */
-function nextReviewWord() {
-    const word = getReviewRandomWord();
-
-    if (reviewIndex < reviewHistory.length - 1) {
-        reviewHistory = reviewHistory.slice(0, reviewIndex + 1);
-    }
-
-    reviewHistory.push(word);
-    reviewIndex++;
-
-    showWord(word);
-    updateButtons();
-}
-
-/* prev review */
-function prevReviewWord() {
-    if (reviewIndex <= 0) return;
-
-    reviewIndex--;
-    showWord(reviewHistory[reviewIndex]);
-    updateButtons();
-}
-
-/* confirm review */
-confirmReviewBtn.onclick = () => {
-    if (reviewWords.length === 0) return alert("Chọn ít nhất 1 chữ!");
-
-    modal.style.display = "flex";
-
-    reviewHistory = [];
-    reviewIndex = -1;
-
-    wordEl.classList.add("review");
-
-    nextReviewWord();
-
-    reviewMode = false;
-    confirmReviewBtn.style.display = "none";
-};
-
-/* override next/prev */
-nextBtn.onclick = () => {
-    if (wordEl.classList.contains("review")) {
-        nextReviewWord();
-    } else {
-        nextWord();
-    }
-};
-
-prevBtn.onclick = () => {
-    if (wordEl.classList.contains("review")) {
-        prevReviewWord();
-    } else {
-        prevWord();
-    }
-};
-
-/* reset khi đóng modal */
-modal.onclick = (e) => {
-    if (e.target === modal) {
-        modal.style.display = "none";
-        wordEl.classList.remove("review");
-    }
-};
-
 </script>
 </body>
 </html>
