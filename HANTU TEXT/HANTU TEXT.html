@@ -472,18 +472,22 @@ function updateButtons() {
     }
 }
 
-function nextWord() {
-    const word = getRandomWord();
-
-    if (currentIndex < history.length - 1) {
-        history = history.slice(0, currentIndex + 1);
+function updateButtons() {
+    if (reviewWords.length > 0) {
+        // review mode
+        if (reviewIndex <= 0) {
+            prevBtn.classList.add("disabled");
+        } else {
+            prevBtn.classList.remove("disabled");
+        }
+    } else {
+        // random mode
+        if (currentIndex <= 0) {
+            prevBtn.classList.add("disabled");
+        } else {
+            prevBtn.classList.remove("disabled");
+        }
     }
-
-    history.push(word);
-    currentIndex++;
-
-    showWord(word);
-    updateButtons();
 }
 
 function prevWord() {
@@ -527,6 +531,10 @@ modal.onclick = (e) => {
         modal.style.display = "none";
 
         wordEl.style.color = "#fff"; // reset màu
+
+        // reset review state
+        reviewHistory = [];
+        reviewIndex = -1;
     }
 };
 
