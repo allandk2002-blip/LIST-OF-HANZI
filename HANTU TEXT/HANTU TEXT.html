@@ -613,11 +613,17 @@ function startReviewSession() {
 }
 
 function nextReviewWord() {
-    const word = getReviewWord();
 
+    // ✅ nếu đang có history phía trước → đi tới lại, KHÔNG random
     if (reviewIndex < reviewHistory.length - 1) {
-        reviewHistory = reviewHistory.slice(0, reviewIndex + 1);
+        reviewIndex++;
+        showWord(reviewHistory[reviewIndex]);
+        updateButtons();
+        return;
     }
+
+    // ❌ chỉ random khi đã ở cuối history
+    const word = getReviewWord();
 
     reviewHistory.push(word);
     reviewIndex++;
