@@ -380,8 +380,14 @@ function renderPanel() {
 
         del.onclick = (e) => {
             e.stopPropagation();
+        
+            const char = item; // chữ đang xóa
+        
+            if (!confirm(`Xóa chữ "${char}"?`)) return;
+        
             data.splice(index, 1);
             data = Array.from(new Set(data));
+        
             save();
             render();
             renderPanel();
