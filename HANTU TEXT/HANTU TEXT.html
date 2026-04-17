@@ -190,6 +190,11 @@ button {
     opacity: 0.3;
     pointer-events: none;
 }
+
+.panel-item{
+    transition: 0.12s;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 </head>
@@ -206,7 +211,7 @@ button {
     <button onclick="togglePanel()">🗂️ Quản lý</button>
     <button onclick="copyAll()">📋 Copy All</button>
     <button id="randomBtn">🎲 Random</button>
-    <button onclick="startReview()">🧠 Review</button>
+    <button onclick="startReview()">🧠 Review 🧠</button>
     <button id="confirmReviewBtn" style="display:none;" onclick="confirmReview()">Xác nhận</button>
 </div>
 
@@ -222,6 +227,17 @@ button {
         <div class="random-word" id="randomWord">字</div>
 
         <div class="arrow right" id="nextBtn">❯</div>
+    </div>
+</div>
+
+<div id="strokeModal" class="random-modal">
+    <div class="random-content"
+         style="width:420px;height:420px;background:#fff;">
+
+        <div id="strokeTarget"
+             style="width:360px;height:360px;">
+        </div>
+
     </div>
 </div>
 
@@ -372,6 +388,10 @@ function renderPanel() {
                 pinned = item;
                 render();
             }
+        };
+
+        cell.ondblclick = () => {
+            showWriter(item);
         };
 
         const del = document.createElement("div");
@@ -639,6 +659,42 @@ function prevReviewWord() {
     showWord(reviewHistory[reviewIndex]);
     updateButtons();
 }
+
+let writer = null;
+
+function showStroke(char, cell) {
+
+    // hiệu ứng click nhấn lần 2
+    cell.style.transform = "scale(0.92)";
+    setTimeout(() => {
+        cell.style.transform = "scale(1)";
+    }, 120);
+
+    const modal = document.getElementById("strokeModal");
+    const target = document.getElementById("strokeTarget");
+
+    modal.style.display = "flex";
+    target.innerHTML = "";
+
+    writer = HanziWriter.create("strokeTarget", char, {
+        width: 360,
+        height: 360,
+        padding: 10,
+        strokeAnimationSpeed: 1,
+        delayBetweenStrokes: 250,
+        strokeColor: "#111",
+        radicalColor: "#444"
+    });
+
+    writer.loopCharacterAnimation();
+}
+
+document.getElementById("strokeModal").onclick = function(e){
+    if(e.target.id === "strokeModal"){
+        this.style.display = "none";
+        document.getElementById("strokeTarget").innerHTML = "";
+    }
+};
   
 </script>
 </body>
