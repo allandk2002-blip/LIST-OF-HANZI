@@ -433,8 +433,8 @@ function renderPanel() {
         
             const menu = document.getElementById("contextMenu");
             menu.style.display = "block";
-            menu.style.left = e.pageX + "px";
-            menu.style.top = e.pageY + "px";
+            menu.style.left = (e.clientX + 4) + "px";
+            menu.style.top = (e.clientY + 2) + "px";
         };
 
         const del = document.createElement("div");
