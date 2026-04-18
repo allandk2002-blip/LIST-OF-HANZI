@@ -195,6 +195,10 @@ button {
     transition: 0.12s;
 }
 
+#menuStroke:hover{
+    background:#2a2a2a;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 </head>
@@ -232,13 +236,43 @@ button {
 
 <div id="strokeModal" class="random-modal">
     <div class="random-content"
-         style="width:420px;height:420px;background:#fff;">
+    style="
+    width:430px;
+    height:430px;
+    background:#f7fbff;
+    border-radius:24px;
+    border:none;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    ">
 
         <div id="strokeTarget"
              style="width:360px;height:360px;">
         </div>
 
     </div>
+</div>
+
+<div id="contextMenu" style="
+position:fixed;
+display:none;
+background:#1b1b1b;
+border:1px solid #333;
+border-radius:12px;
+padding:6px;
+min-width:160px;
+z-index:9999;
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+">
+
+<div id="menuStroke" style="
+padding:10px 14px;
+cursor:pointer;
+border-radius:8px;
+transition:.12s;
+">
+✍️ Xem cách viết
+</div>
+
 </div>
 
 <div id="writerModal" class="random-modal">
@@ -390,8 +424,16 @@ function renderPanel() {
             }
         };
 
-        cell.ondblclick = () => {
-            showStroke(item, cell);
+        cell.oncontextmenu = (e) => {
+            e.preventDefault();
+        
+            activeChar = item;
+            activeCell = cell;
+        
+            const menu = document.getElementById("contextMenu");
+            menu.style.display = "block";
+            menu.style.left = e.pageX + "px";
+            menu.style.top = e.pageY + "px";
         };
 
         const del = document.createElement("div");
@@ -661,6 +703,8 @@ function prevReviewWord() {
 }
 
 let writer = null;
+let activeChar = "";
+let activeCell = null;
 
 function showStroke(char, cell) {
 
@@ -682,8 +726,8 @@ function showStroke(char, cell) {
         padding: 10,
         strokeAnimationSpeed: 1,
         delayBetweenStrokes: 250,
-        strokeColor: "#111",
-        radicalColor: "#444"
+        strokeColor: "#7db7ff",
+        radicalColor: "#98e2b8"
     });
 
     writer.loopCharacterAnimation();
@@ -695,6 +739,17 @@ document.getElementById("strokeModal").onclick = function(e){
         document.getElementById("strokeTarget").innerHTML = "";
     }
 };
+
+document.getElementById("menuStroke").onclick = () => {
+    if(activeChar && activeCell){
+        showStroke(activeChar, activeCell);
+    }
+    document.getElementById("contextMenu").style.display = "none";
+};
+
+document.addEventListener("click", () => {
+    document.getElementById("contextMenu").style.display = "none";
+});
   
 </script>
 </body>
