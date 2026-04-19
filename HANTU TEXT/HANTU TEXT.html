@@ -1026,7 +1026,68 @@ document.getElementById("menuStroke").onclick = () => {
 document.addEventListener("click", () => {
     document.getElementById("contextMenu").style.display = "none";
 });
-  
+
+function getWords(){
+
+    if(currentGroup){
+        words = [...(groups[currentGroup] || [])];
+        return;
+    }
+
+    if (reviewWords.length > 0) {
+        words = [...reviewWords];
+        return;
+    }
+
+    words = [...data];
+}
+
+/* ========================= */
+
+function nextWord(){
+
+    if(words.length === 0) return;
+
+    // nếu đang xem lịch sử cũ thì đi tiếp
+    if(currentIndex < history.length - 1){
+        currentIndex++;
+        showWord(history[currentIndex]);
+        updateButtons();
+        return;
+    }
+
+    const word = getRandomWord();
+
+    history.push(word);
+    currentIndex++;
+
+    showWord(word);
+    updateButtons();
+}
+
+/* ========================= */
+
+randomBtn.onclick = () => {
+
+    getWords();
+
+    if(words.length === 0){
+        alert("Không có chữ để random");
+        return;
+    }
+
+    reviewWords = [];
+
+    modal.style.display = "flex";
+
+    history = [];
+    currentIndex = -1;
+
+    wordEl.style.color = "#fff";
+
+    nextWord();
+};
+    
 </script>
 </body>
 </html>
