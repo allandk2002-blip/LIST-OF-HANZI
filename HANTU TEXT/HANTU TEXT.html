@@ -515,18 +515,24 @@ function getWords() {
     }
 
     const items = document.querySelectorAll(".panel-item");
-    words = Array.from(items).map(el => el.childNodes[0]?.nodeValue.trim()).filter(Boolean);
+    words = Array.from(items)
+        .map(el => el.childNodes[0]?.nodeValue.trim())
+        .filter(Boolean);
 }
 
 function getRandomWord() {
     if (words.length === 0) return "";
 
-    let pool = words;
+    let pool = [...words];
 
-    if (words.length > 10 && history.length >= 10) {
-        const recent = history.slice(-10);
+    const block = Math.max(1, Math.floor(words.length / 3));
+
+    if (history.length >= block) {
+        const recent = history.slice(-block);
+
         pool = words.filter(w => !recent.includes(w));
-        if (pool.length === 0) pool = words;
+
+        if (pool.length === 0) pool = [...words];
     }
 
     return pool[Math.floor(Math.random() * pool.length)];
@@ -566,15 +572,22 @@ function prevWord() {
     if (currentIndex <= 0) return;
 
     currentIndex--;
+
     showWord(history[currentIndex]);
     updateButtons();
 }
 
 randomBtn.onclick = () => {
+
     getWords();
-    if (words.length === 0) return;
+
+    if (words.length === 0) {
+        alert("Chưa có chữ nào.");
+        return;
+    }
 
     modal.style.display = "flex";
+    wordEl.style.color = "#fff";
 
     history = [];
     currentIndex = -1;
@@ -582,6 +595,26 @@ randomBtn.onclick = () => {
     nextWord();
 };
 
+function nextWord() {
+
+    // Nếu đang lùi lịch sử rồi bấm tới => đi tiếp lịch sử cũ
+    if (currentIndex < history.length - 1) {
+        currentIndex++;
+        showWord(history[currentIndex]);
+        updateButtons();
+        return;
+    }
+
+    // Nếu đang ở cuối mới random mới
+    const word = getRandomWord();
+
+    history.push(word);
+    currentIndex++;
+
+    showWord(word);
+    updateButtons();
+}
+    
 nextBtn.onclick = () => {
     if (reviewWords.length > 0) {
         nextReviewWord();
