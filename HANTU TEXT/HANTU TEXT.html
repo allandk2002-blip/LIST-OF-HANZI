@@ -196,8 +196,7 @@ button {
     transition: 0.12s;
 }
 
-#menuStroke:hover,
-#menuAddGroup:hover{
+#menuStroke:hover{
     background:#2a2a2a;
 }
 
@@ -219,8 +218,6 @@ button {
     <button id="randomBtn">🎲 Random</button>
     <button onclick="startReview()">🧠 Review </button>
     <button id="confirmReviewBtn" style="display:none;" onclick="confirmReview()">Xác nhận</button>
-    <button onclick="openGroups()">📁 Nhóm chữ</button>
-    <button id="backBtn" onclick="goHome()" style="display:none;">⬅️ Trang chính</button>
 </div>
 
 <div class="panel" id="panel"></div>
@@ -280,19 +277,6 @@ font-weight:500;
 ✍️ Xem cách viết
 </div>
 
-<div id="menuAddGroup" style="
-padding:10px 14px;
-cursor:pointer;
-border-radius:8px;
-transition:.12s;
-margin-top:4px;
-background:#3e4956;
-color:white;
-font-weight:500;
-">
-➕ Thêm vào nhóm
-</div>
-
 </div>
 
 <div id="writerModal" class="random-modal">
@@ -310,13 +294,10 @@ font-weight:500;
 
 <script>
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
-let groups = JSON.parse(localStorage.getItem("hanzi_groups")) || {};
-let currentGroup = null;
 let pinned = null;
 
 function save() {
     localStorage.setItem("hanzi", JSON.stringify(data));
-    localStorage.setItem("hanzi_groups", JSON.stringify(groups));
 }
 
 function isHan(char) {
@@ -374,14 +355,6 @@ function addText() {
 
     data = Array.from(new Set([...data, ...arr]));
 
-    if(currentGroup){
-        groups[currentGroup] =
-        Array.from(new Set([
-            ...groups[currentGroup],
-            ...arr
-        ]));
-    }
-
     save();
     render();
     renderPanel();
@@ -391,20 +364,10 @@ function addText() {
 
 /* ===== GRID ===== */
 function render() {
-
-    document.querySelector('button[onclick="copyAll()"]').style.display =
-    currentGroup ? "none" : "inline-block";
-
-    document.querySelector('button[onclick="render()"]').style.display =
-    currentGroup ? "none" : "inline-block";
-
-    document.getElementById("backBtn").style.display =
-    currentGroup ? "inline-block" : "none";
-
     const grid = document.getElementById("grid");
     grid.innerHTML = "";
 
-    let display = [...currentData()];
+    let display = [...data];
 
     if (pinned) {
         display = [pinned, ...display.filter(x => x !== pinned)];
@@ -422,8 +385,7 @@ function render() {
 
         btn.onclick = (e) => {
             e.stopPropagation();
-            let arr = currentData();
-            div.textContent = arr[Math.floor(Math.random() * arr.length)];
+            div.textContent = data[Math.floor(Math.random() * data.length)];
             div.appendChild(btn);
         };
 
@@ -446,7 +408,7 @@ function renderPanel() {
     const panel = document.getElementById("panel");
     panel.innerHTML = "";
 
-    currentData().forEach((item,index)=>{
+    data.forEach((item, index) => {
         const cell = document.createElement("div");
         cell.className = "panel-item";
         cell.textContent = item;
@@ -482,21 +444,15 @@ function renderPanel() {
         del.className = "delete-btn";
         del.textContent = "✕";
 
-        del.onclick = (e)=>{
+        del.onclick = (e) => {
             e.stopPropagation();
         
-            if(!confirm(`Xóa "${item}"?`)) return;
+            const char = item; // chữ đang xóa
         
-            if(currentGroup){
-                groups[currentGroup] =
-                    groups[currentGroup].filter(x=>x!==item);
-            }else{
-                data = data.filter(x=>x!==item);
+            if (!confirm(`Xóa chữ "${char}"?`)) return;
         
-                for(let g in groups){
-                    groups[g] = groups[g].filter(x=>x!==item);
-                }
-            }
+            data.splice(index, 1);
+            data = Array.from(new Set(data));
         
             save();
             render();
@@ -522,44 +478,6 @@ function copyAll() {
     document.body.removeChild(textarea);
 
     alert("Đã copy!");
-}
-
-function addCharToGroup(){
-
-    if(!activeChar) return;
-
-    let names = Object.keys(groups);
-
-    if(names.length === 0){
-        alert("Chưa có nhóm nào.");
-        return;
-    }
-
-    let txt = "Chọn nhóm thêm chữ '" + activeChar + "'\n\n";
-
-    names.forEach((g,i)=>{
-        txt += (i+1)+". " + g + "\n";
-    });
-
-    let choose = prompt(txt);
-
-    if(!choose) return;
-
-    if(!groups[choose]){
-        alert("Không tồn tại nhóm.");
-        return;
-    }
-
-    groups[choose] = Array.from(new Set([
-        ...groups[choose],
-        activeChar
-    ]));
-
-    save();
-
-    alert("Đã thêm vào nhóm " + choose);
-
-    document.getElementById("contextMenu").style.display = "none";
 }
 
 /* ===== CLEAR ===== */
@@ -813,72 +731,12 @@ function nextReviewWord() {
     updateButtons();
 }
 
-function currentData(){
-    if(currentGroup){
-        return groups[currentGroup] || [];
-    }
-    return data;
-}
-
 function prevReviewWord() {
     if (reviewIndex <= 0) return;
 
     reviewIndex--;
     showWord(reviewHistory[reviewIndex]);
     updateButtons();
-}
-
-function openGroups(){
-
-    let names = Object.keys(groups);
-
-    let txt = "Nhóm hiện có:\n\n";
-
-    names.forEach((g,i)=>{
-        txt += (i+1)+". "+g+"\n";
-    });
-
-    txt += "\nNhập tên nhóm để mở.\nNhập NEW để tạo nhóm.";
-
-    let choose = prompt(txt);
-
-    if(!choose) return;
-
-    if(choose.toUpperCase()=="NEW"){
-        createGroup();
-        return;
-    }
-
-    if(groups[choose]){
-        currentGroup = choose;
-        render();
-        renderPanel();
-    }
-}
-
-function createGroup(){
-
-    let name = prompt("Tên nhóm?");
-    if(!name) return;
-
-    if(groups[name]){
-        alert("Nhóm đã tồn tại");
-        return;
-    }
-
-    let chars = prompt("Nhập chữ muốn thêm vào nhóm, cách nhau dấu cách");
-
-    let arr = chars ? chars.split(/\s+/).filter(Boolean) : [];
-
-    groups[name] = arr.filter(x=>data.includes(x));
-
-    save();
-}
-
-function goHome(){
-    currentGroup = null;
-    render();
-    renderPanel();
 }
 
 let writer = null;
@@ -925,14 +783,6 @@ document.getElementById("menuStroke").onclick = () => {
     }
     document.getElementById("contextMenu").style.display = "none";
 };
-
-document.getElementById("menuAddGroup").onclick = () => {
-    addCharToGroup();
-};
-
-document.addEventListener("click", () => {
-    document.getElementById("contextMenu").style.display = "none";
-});
 
 document.addEventListener("click", () => {
     document.getElementById("contextMenu").style.display = "none";
