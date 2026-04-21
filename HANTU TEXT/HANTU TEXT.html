@@ -206,6 +206,7 @@ button {
 
 <body>
 
+
 <div class="container">
 
 <div id="input" contenteditable="true"></div>
@@ -218,6 +219,8 @@ button {
     <button id="randomBtn">🎲 Random</button>
     <button onclick="startReview()">🧠 Review </button>
     <button id="confirmReviewBtn" style="display:none;" onclick="confirmReview()">Xác nhận</button>
+    <button id="groupBtn">🗃️ Nhóm chữ</button>
+    <button id="backHomeBtn" style="display:none;">⬅️ Trang chính</button>
 </div>
 
 <div class="panel" id="panel"></div>
@@ -253,6 +256,19 @@ button {
     </div>
 </div>
 
+<div id="groupMenu" style="
+position:fixed;
+display:none;
+background:#1b1b1b;
+border:1px solid #333;
+border-radius:12px;
+padding:6px;
+min-width:180px;
+z-index:9999;
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+"></div>
+
+    
 <div id="contextMenu" style="
 position:fixed;
 display:none;
@@ -293,6 +309,21 @@ font-weight:500;
 </div>
 
 <script>
+
+let groups = JSON.parse(localStorage.getItem("hanziGroups") || "{}");
+
+let currentGroup = null; // null = trang chính
+
+function saveGroups(){
+    localStorage.setItem("hanziGroups", JSON.stringify(groups));
+}
+
+function getCurrentData(){
+    if(!currentGroup) return data;
+
+    return data.filter(x => groups[currentGroup]?.includes(x));
+}
+    
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
 let pinned = null;
 
@@ -787,7 +818,317 @@ document.getElementById("menuStroke").onclick = () => {
 document.addEventListener("click", () => {
     document.getElementById("contextMenu").style.display = "none";
 });
-  
+
+function render(){
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    let display = [...getCurrentData()];
+
+    if (pinned && display.includes(pinned)) {
+        display = [pinned, ...display.filter(x => x !== pinned)];
+    }
+
+    display = display.sort(() => Math.random() - 0.5).slice(0,60);
+
+    display.forEach((item)=>{
+        const div = document.createElement("div");
+        div.className = "card";
+        div.textContent = item;
+
+        div.onclick = ()=>div.classList.toggle("active");
+
+        grid.appendChild(div);
+    });
+}
+
+/* =======================
+   RENDER PANEL
+======================= */
+
+function renderPanel(){
+    const panel = document.getElementById("panel");
+    panel.innerHTML = "";
+
+    let arr = getCurrentData();
+
+    arr.forEach((item,index)=>{
+
+        const cell = document.createElement("div");
+        cell.className = "panel-item";
+        cell.textContent = item;
+
+        cell.onclick = ()=>{
+            pinned = item;
+            render();
+        };
+
+        /* click phải */
+        cell.oncontextmenu = (e)=>{
+            e.preventDefault();
+
+            activeChar = item;
+            activeCell = cell;
+
+            const menu = document.getElementById("contextMenu");
+
+            let html = `
+            <div id="menuStroke" style="padding:10px;border-radius:8px;cursor:pointer;">✍️ Xem cách viết</div>
+            `;
+
+            if(!currentGroup && Object.keys(groups).length){
+                html += `<div id="addToGroupBtn" style="padding:10px;border-radius:8px;cursor:pointer;">➕ Thêm vào nhóm</div>`;
+
+                Object.keys(groups).forEach(g=>{
+                    html += `
+                    <div class="groupAddItem"
+                    data-name="${g}"
+                    style="padding:10px 18px;cursor:pointer;color:#ccc;">
+                    ↳ ${g}
+                    </div>`;
+                });
+            }
+
+            menu.innerHTML = html;
+
+            menu.style.display="block";
+            menu.style.left = e.clientX+"px";
+            menu.style.top = e.clientY+"px";
+
+            setTimeout(bindContextMenu,10);
+        };
+
+        /* nút xóa */
+        const del = document.createElement("div");
+        del.className = "delete-btn";
+        del.textContent = "✕";
+
+        del.onclick = (e)=>{
+            e.stopPropagation();
+
+            if(currentGroup){
+                if(!confirm(`Bỏ "${item}" khỏi nhóm ${currentGroup}?`)) return;
+
+                groups[currentGroup] =
+                groups[currentGroup].filter(x=>x!==item);
+
+                saveGroups();
+            }else{
+                if(!confirm(`Xóa "${item}" toàn bộ?`)) return;
+
+                data = data.filter(x=>x!==item);
+
+                Object.keys(groups).forEach(g=>{
+                    groups[g] = groups[g].filter(v=>v!==item);
+                });
+
+                save();
+                saveGroups();
+            }
+
+            render();
+            renderPanel();
+        };
+
+        cell.appendChild(del);
+        panel.appendChild(cell);
+    });
+}
+
+/* =======================
+   MENU CHUỘT PHẢI
+======================= */
+
+function bindContextMenu(){
+
+    const s = document.getElementById("menuStroke");
+    if(s){
+        s.onclick = ()=>{
+            showStroke(activeChar, activeCell);
+            contextMenu.style.display="none";
+        };
+    }
+
+    document.querySelectorAll(".groupAddItem").forEach(el=>{
+        el.onclick = ()=>{
+            const g = el.dataset.name;
+
+            if(!groups[g].includes(activeChar)){
+                groups[g].push(activeChar);
+                saveGroups();
+                alert("Đã thêm vào nhóm "+g);
+            }
+
+            contextMenu.style.display="none";
+        };
+    });
+}
+
+/* =======================
+   NÚT NHÓM CHỮ
+======================= */
+
+document.getElementById("groupBtn").onclick = (e)=>{
+
+    const menu = document.getElementById("groupMenu");
+
+    let html = "";
+
+    Object.keys(groups).forEach(name=>{
+        html += `
+        <div class="openGroup"
+        data-name="${name}"
+        style="padding:10px;cursor:pointer;border-radius:8px;">
+        ${name}
+        </div>`;
+    });
+
+    html += `
+    <div id="createGroup"
+    style="padding:10px;cursor:pointer;border-radius:8px;color:#8fd;">
+    + Tạo nhóm
+    </div>`;
+
+    menu.innerHTML = html;
+
+    menu.style.display="block";
+    menu.style.left = e.target.getBoundingClientRect().left+"px";
+    menu.style.top =
+    (e.target.getBoundingClientRect().bottom+6)+"px";
+
+    setTimeout(bindGroupMenu,10);
+};
+
+function bindGroupMenu(){
+
+    document.querySelectorAll(".openGroup").forEach(el=>{
+        el.onclick = ()=>{
+            openGroup(el.dataset.name);
+            groupMenu.style.display="none";
+        };
+    });
+
+    document.getElementById("createGroup").onclick = ()=>{
+        createGroup();
+        groupMenu.style.display="none";
+    };
+}
+
+/* =======================
+   TẠO NHÓM
+======================= */
+
+function createGroup(){
+
+    const name = prompt("Tên nhóm?");
+    if(!name) return;
+
+    if(groups[name]){
+        alert("Đã tồn tại");
+        return;
+    }
+
+    groups[name] = [];
+
+    document.getElementById("panel").style.display="grid";
+    renderPanel();
+
+    let chosen = prompt("Nhập chữ cách nhau bằng dấu cách.\nVí dụ 木 林 森");
+
+    if(chosen){
+        let arr = chosen.split(/\s+/).filter(x=>data.includes(x));
+        groups[name] = [...new Set(arr)];
+    }
+
+    saveGroups();
+    alert("Đã tạo nhóm "+name);
+}
+
+/* =======================
+   MỞ NHÓM
+======================= */
+
+function openGroup(name){
+
+    currentGroup = name;
+
+    document.getElementById("backHomeBtn").style.display="inline-block";
+
+    document.querySelector('[onclick="copyAll()"]').style.display="none";
+    document.querySelector('[onclick="render()"]').style.display="none";
+
+    render();
+    renderPanel();
+}
+
+/* =======================
+   VỀ TRANG CHÍNH
+======================= */
+
+document.getElementById("backHomeBtn").onclick = ()=>{
+
+    currentGroup = null;
+
+    document.getElementById("backHomeBtn").style.display="none";
+
+    document.querySelector('[onclick="copyAll()"]').style.display="inline-block";
+    document.querySelector('[onclick="render()"]').style.display="inline-block";
+
+    render();
+    renderPanel();
+};
+
+/* =======================
+   THÊM CHỮ
+======================= */
+
+function addText(){
+
+    const text = input.innerText;
+
+    let arr = [...text].filter(c=>isHan(c));
+
+    data = Array.from(new Set([...data,...arr]));
+
+    if(currentGroup){
+        groups[currentGroup] =
+        Array.from(new Set([
+            ...groups[currentGroup],
+            ...arr
+        ]));
+        saveGroups();
+    }
+
+    save();
+
+    input.innerHTML="";
+    render();
+    renderPanel();
+}
+
+/* =======================
+   RANDOM dùng data hiện tại
+======================= */
+
+function getWords(){
+    words = [...getCurrentData()];
+}
+
+/* =======================
+   LOAD
+======================= */
+
+render();
+renderPanel();
+
+document.addEventListener("click",(e)=>{
+    if(!e.target.closest("#groupBtn"))
+        groupMenu.style.display="none";
+
+    if(!e.target.closest("#contextMenu"))
+        contextMenu.style.display="none";
+});
+
 </script>
 </body>
 </html>
