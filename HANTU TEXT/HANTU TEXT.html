@@ -977,20 +977,41 @@ document.getElementById("groupBtn").onclick = (e)=>{
 
         html += `
         <div class="groupRow"
-        style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;">
-
+        style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:8px;
+        gap:8px;
+        border-radius:8px;
+        ">
+        
             <div class="openGroup"
             data-name="${name}"
-            style="flex:1;cursor:pointer;">
+            style="
+            flex:1;
+            cursor:pointer;
+            padding:4px 6px;
+            ">
             ${name}
             </div>
-
-            <div class="deleteGroup"
-            data-name="${name}"
-            style="color:#ff6b6b;cursor:pointer;padding:0 8px;">
-            ✕
+        
+            <div style="display:flex;gap:6px;">
+        
+                <div class="renameGroup"
+                data-name="${name}"
+                style="cursor:pointer;padding:0 6px;">
+                ✏️
+                </div>
+        
+                <div class="deleteGroup"
+                data-name="${name}"
+                style="cursor:pointer;color:#ff6b6b;padding:0 6px;">
+                ✕
+                </div>
+        
             </div>
-
+        
         </div>
         `;
     });
@@ -1046,6 +1067,43 @@ function bindGroupMenu(){
         };
     });
 
+    /* đổi tên nhóm */
+        document.querySelectorAll(".renameGroup").forEach(el=>{
+        
+            el.onclick = (ev)=>{
+                ev.stopPropagation();
+        
+                const oldName = el.dataset.name;
+                const newName = prompt("Tên mới:", oldName);
+        
+                if(newName === null) return;
+                if(newName.trim()==="") return;
+                if(newName === oldName) return;
+        
+                if(groups[newName]){
+                    alert("Tên đã tồn tại");
+                    return;
+                }
+        
+                const ok = confirm(`Đổi "${oldName}" thành "${newName}" ?`);
+                if(!ok) return;
+        
+                groups[newName] = groups[oldName];
+                delete groups[oldName];
+        
+                if(currentGroup === oldName){
+                    currentGroup = newName;
+                }
+        
+                saveGroups();
+        
+                render();
+                renderPanel();
+        
+                document.getElementById("groupBtn").click();
+            };
+        
+        });
     document.querySelectorAll(".deleteGroup").forEach(el=>{
 
         el.onclick = (ev)=>{
