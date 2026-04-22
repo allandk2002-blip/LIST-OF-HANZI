@@ -322,6 +322,7 @@ font-weight:500;
 
 let groups = JSON.parse(localStorage.getItem("hanziGroups") || "{}");
 
+let groupAnchorBtn = null;
 let currentGroup = null; // null = trang chính
 
 function saveGroups(){
@@ -916,12 +917,12 @@ function renderPanel(){
             }
 
             menu.innerHTML = html;
-
+            
             menu.style.display="block";
-            menu.style.left = e.clientX+"px";
-            menu.style.top = e.clientY+"px";
-
-            setTimeout(bindContextMenu,10);
+            
+            positionGroupMenu();
+            
+            setTimeout(bindGroupMenu,10);
         };
 
         /* nút xóa */
@@ -1035,6 +1036,7 @@ function bindContextMenu(){
 ======================= */
 
 document.getElementById("groupBtn").onclick = (e)=>{
+    groupAnchorBtn = e.currentTarget;
 
     const menu = document.getElementById("groupMenu");
     let html = "";
@@ -1308,6 +1310,19 @@ function addText(){
    RANDOM dùng data hiện tại
 ======================= */
 
+function positionGroupMenu(){
+
+    const menu = document.getElementById("groupMenu");
+
+    if(!groupAnchorBtn) return;
+    if(menu.style.display === "none") return;
+
+    const rect = groupAnchorBtn.getBoundingClientRect();
+
+    menu.style.left = rect.left + "px";
+    menu.style.top = (rect.bottom + 6) + "px";
+}
+
 function getWords(){
     words = [...getCurrentData()];
 }
@@ -1326,6 +1341,17 @@ document.addEventListener("click",(e)=>{
     if(!e.target.closest("#contextMenu"))
         contextMenu.style.display="none";
 });
+
+document.addEventListener("click",(e)=>{
+    if(!e.target.closest("#groupBtn"))
+        groupMenu.style.display="none";
+
+    if(!e.target.closest("#contextMenu"))
+        contextMenu.style.display="none";
+});
+
+window.addEventListener("scroll", positionGroupMenu);
+window.addEventListener("resize", positionGroupMenu);    
 
 </script>
 </body>
