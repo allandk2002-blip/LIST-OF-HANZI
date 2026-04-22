@@ -324,6 +324,7 @@ let groups = JSON.parse(localStorage.getItem("hanziGroups") || "{}");
 
 let groupAnchorBtn = null;
 let currentGroup = null; // null = trang chính
+let contextAnchorCell = null;
 
 function saveGroups(){
     localStorage.setItem("hanziGroups", JSON.stringify(groups));
@@ -917,12 +918,13 @@ function renderPanel(){
             }
 
             menu.innerHTML = html;
+            contextAnchorCell = cell;
             
             menu.style.display="block";
             
-            positionGroupMenu();
+            positionContextMenu();
             
-            setTimeout(bindGroupMenu,10);
+            setTimeout(bindContextMenu,10);
         };
 
         /* nút xóa */
@@ -1323,6 +1325,19 @@ function positionGroupMenu(){
     menu.style.top = (rect.bottom + 6) + "px";
 }
 
+function positionContextMenu(){
+
+    const menu = document.getElementById("contextMenu");
+
+    if(!contextAnchorCell) return;
+    if(menu.style.display === "none") return;
+
+    const rect = contextAnchorCell.getBoundingClientRect();
+
+    menu.style.left = (rect.right + 6) + "px";
+    menu.style.top  = rect.top + "px";
+}
+
 function getWords(){
     words = [...getCurrentData()];
 }
@@ -1351,7 +1366,9 @@ document.addEventListener("click",(e)=>{
 });
 
 window.addEventListener("scroll", positionGroupMenu);
-window.addEventListener("resize", positionGroupMenu);    
+window.addEventListener("resize", positionGroupMenu);   
+window.addEventListener("scroll", positionContextMenu);
+window.addEventListener("resize", positionContextMenu);
 
 </script>
 </body>
