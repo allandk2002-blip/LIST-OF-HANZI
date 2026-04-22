@@ -211,6 +211,16 @@ button {
 
 <div id="input" contenteditable="true"></div>
 
+<div id="groupTitle" style="
+display:none;
+font-family:Roboto,sans-serif;
+font-size:28px;
+font-weight:700;
+margin-top:14px;
+color:#fff;
+letter-spacing:.5px;
+"></div>
+
 <div class="buttons">
     <button onclick="addText()">➕ Thêm</button>
     <button onclick="render()">🔀 Shuffle</button>
@@ -1236,6 +1246,9 @@ function openGroup(name){
 
     currentGroup = name;
 
+    document.getElementById("groupTitle").style.display = "block";
+    document.getElementById("groupTitle").textContent = name;
+
     document.getElementById("backHomeBtn").style.display="inline-block";
 
     document.querySelector('[onclick="copyAll()"]').style.display="none";
@@ -1252,7 +1265,8 @@ function openGroup(name){
 document.getElementById("backHomeBtn").onclick = ()=>{
 
     currentGroup = null;
-
+    
+    document.getElementById("groupTitle").style.display = "none";
     document.getElementById("backHomeBtn").style.display="none";
 
     document.querySelector('[onclick="copyAll()"]').style.display="inline-block";
