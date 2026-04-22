@@ -998,6 +998,8 @@ document.getElementById("groupBtn").onclick = (e)=>{
         padding:8px;
         gap:8px;
         border-radius:8px;
+        border-bottom:1px solid #3a3a3a;
+        margin:0 6px;
         ">
         
             <div class="openGroup"
@@ -1032,7 +1034,16 @@ document.getElementById("groupBtn").onclick = (e)=>{
 
     html += `
     <div id="createGroup"
-    style="padding:10px;cursor:pointer;border-radius:8px;color:#8fd;">
+    style="
+    padding:10px;
+    cursor:pointer;
+    border-radius:10px;
+    background:#1f7a3f;
+    color:white;
+    font-weight:600;
+    text-align:center;
+    margin:8px 6px 4px;
+    ">
     + Tạo nhóm
     </div>`;
 
@@ -1045,6 +1056,10 @@ document.getElementById("groupBtn").onclick = (e)=>{
 
     setTimeout(bindGroupMenu,10);
 };
+document.querySelectorAll(".groupRow").forEach(row=>{
+    row.onmouseenter=()=>row.style.background="#262626";
+    row.onmouseleave=()=>row.style.background="transparent";
+});
 
 function bindGroupMenu(){
 
@@ -1069,8 +1084,17 @@ function bindGroupMenu(){
                 return;
             }
 
-            groups[newName] = groups[oldName];
-            delete groups[oldName];
+            const newGroups = {};
+            
+            Object.keys(groups).forEach(key => {
+                if(key === oldName){
+                    newGroups[newName] = groups[oldName];
+                }else{
+                    newGroups[key] = groups[key];
+                }
+            });
+            
+            groups = newGroups;
 
             if(currentGroup === oldName){
                 currentGroup = newName;
