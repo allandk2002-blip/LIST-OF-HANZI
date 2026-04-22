@@ -969,17 +969,18 @@ function bindContextMenu(){
     const addBtn = document.getElementById("addToGroupBtn");
 
     if(addBtn){
-        addBtn.onclick = ()=>{
-
+        addBtn.onclick = (e)=>{
+            e.stopPropagation();
+    
             const box = document.getElementById("groupExpandBox");
-
+    
             if(box.style.display === "block"){
                 box.style.display = "none";
                 return;
             }
-
+    
             let html = "";
-
+    
             Object.keys(groups).forEach(g=>{
                 html += `
                 <div class="groupAddItem"
@@ -994,25 +995,26 @@ function bindContextMenu(){
                 </div>
                 `;
             });
-
+    
             box.innerHTML = html;
             box.style.display = "block";
-
+    
             document.querySelectorAll(".groupAddItem").forEach(el=>{
-
-                el.onclick = ()=>{
-
+    
+                el.onclick = (e)=>{
+                    e.stopPropagation();
+    
                     const g = el.dataset.name;
-
+    
                     if(!groups[g].includes(activeChar)){
                         groups[g].push(activeChar);
                         saveGroups();
                         alert("Đã thêm vào nhóm " + g);
                     }
-
+    
                     contextMenu.style.display="none";
                 };
-
+    
             });
         };
     }
