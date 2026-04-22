@@ -859,6 +859,20 @@ function renderPanel(){
         cell.textContent = item;
 
         cell.onclick = ()=>{
+        
+            if(reviewMode){
+        
+                if(selectedReview.has(item)){
+                    selectedReview.delete(item);
+                    cell.classList.remove("highlight");
+                }else{
+                    selectedReview.add(item);
+                    cell.classList.add("highlight");
+                }
+        
+                return;
+            }
+        
             pinned = item;
             render();
         };
