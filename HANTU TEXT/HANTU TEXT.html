@@ -1099,9 +1099,6 @@ function bindGroupMenu(){
                     return;
                 }
         
-                const ok = confirm(`Đổi "${oldName}" thành "${newName}" ?`);
-                if(!ok) return;
-        
                 groups[newName] = groups[oldName];
                 delete groups[oldName];
         
