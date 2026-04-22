@@ -971,16 +971,28 @@ function bindContextMenu(){
 document.getElementById("groupBtn").onclick = (e)=>{
 
     const menu = document.getElementById("groupMenu");
-
     let html = "";
 
     Object.keys(groups).forEach(name=>{
+
         html += `
-        <div class="openGroup"
-        data-name="${name}"
-        style="padding:10px;cursor:pointer;border-radius:8px;">
-        ${name}
-        </div>`;
+        <div class="groupRow"
+        style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;">
+
+            <div class="openGroup"
+            data-name="${name}"
+            style="flex:1;cursor:pointer;">
+            ${name}
+            </div>
+
+            <div class="deleteGroup"
+            data-name="${name}"
+            style="color:#ff6b6b;cursor:pointer;padding:0 8px;">
+            ✕
+            </div>
+
+        </div>
+        `;
     });
 
     html += `
@@ -1002,15 +1014,63 @@ document.getElementById("groupBtn").onclick = (e)=>{
 function bindGroupMenu(){
 
     document.querySelectorAll(".openGroup").forEach(el=>{
+
         el.onclick = ()=>{
             openGroup(el.dataset.name);
             groupMenu.style.display="none";
+        };
+
+        el.ondblclick = (ev)=>{
+            ev.stopPropagation();
+
+            const oldName = el.dataset.name;
+            const newName = prompt("Tên mới?", oldName);
+
+            if(!newName || newName.trim()==="") return;
+            if(newName === oldName) return;
+
+            if(groups[newName]){
+                alert("Tên đã tồn tại");
+                return;
+            }
+
+            groups[newName] = groups[oldName];
+            delete groups[oldName];
+
+            if(currentGroup === oldName){
+                currentGroup = newName;
+            }
+
+            saveGroups();
+            document.getElementById("groupBtn").click();
+        };
+    });
+
+    document.querySelectorAll(".deleteGroup").forEach(el=>{
+
+        el.onclick = (ev)=>{
+            ev.stopPropagation();
+
+            const name = el.dataset.name;
+
+            if(!confirm(`Xóa nhóm "${name}" ?`)) return;
+
+            delete groups[name];
+
+            if(currentGroup === name){
+                currentGroup = null;
+            }
+
+            saveGroups();
+            render();
+            renderPanel();
+
+            document.getElementById("groupBtn").click();
         };
     });
 
     document.getElementById("createGroup").onclick = ()=>{
         createGroup();
-        groupMenu.style.display="none";
     };
 }
 
@@ -1020,8 +1080,8 @@ function bindGroupMenu(){
 
 function createGroup(){
 
-    const name = prompt("Tên nhóm?");
-    if(!name) return;
+    const name = prompt("Tên nhóm mới?");
+    if(!name || name.trim()==="") return;
 
     if(groups[name]){
         alert("Đã tồn tại");
@@ -1029,21 +1089,10 @@ function createGroup(){
     }
 
     groups[name] = [];
-
-    document.getElementById("panel").style.display="grid";
-    renderPanel();
-
-    let chosen = prompt("Nhập chữ cách nhau bằng dấu cách.\nVí dụ 木 林 森");
-
-    if(chosen){
-        let arr = chosen.split(/\s+/).filter(x=>data.includes(x));
-        groups[name] = [...new Set(arr)];
-    }
-
     saveGroups();
-    alert("Đã tạo nhóm "+name);
-}
 
+    document.getElementById("groupBtn").click();
+}
 /* =======================
    MỞ NHÓM
 ======================= */
