@@ -1015,11 +1015,13 @@ function bindGroupMenu(){
 
     document.querySelectorAll(".openGroup").forEach(el=>{
 
+        /* click mở nhóm */
         el.onclick = ()=>{
             openGroup(el.dataset.name);
             groupMenu.style.display="none";
         };
 
+        /* double click đổi tên */
         el.ondblclick = (ev)=>{
             ev.stopPropagation();
 
@@ -1034,14 +1036,27 @@ function bindGroupMenu(){
                 return;
             }
 
-            groups[newName] = groups[oldName];
-            delete groups[oldName];
+            /* ===== GIỮ THỨ TỰ CŨ ===== */
+            const newGroups = {};
+
+            Object.keys(groups).forEach(key=>{
+
+                if(key === oldName){
+                    newGroups[newName] = groups[oldName];
+                }else{
+                    newGroups[key] = groups[key];
+                }
+
+            });
+
+            groups = newGroups;
 
             if(currentGroup === oldName){
                 currentGroup = newName;
             }
 
             saveGroups();
+
             document.getElementById("groupBtn").click();
         };
     });
@@ -1073,7 +1088,6 @@ function bindGroupMenu(){
         createGroup();
     };
 }
-
 /* =======================
    TẠO NHÓM
 ======================= */
