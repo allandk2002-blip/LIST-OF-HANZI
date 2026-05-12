@@ -208,11 +208,12 @@ button {
 }
 
 .panel-pinyin{
-    font-size:11px;
+    font-size:13px;
     color:#9ca3af;
     font-family:Roboto,sans-serif;
     line-height:1;
     margin-top:-2px;
+    letter-spacing:.5px;
 }
 
 </style>
@@ -925,7 +926,7 @@ function renderPanel(){
         
             cell.innerHTML = `
             <div>${item}</div>
-            <div class="panel-pinyin">${py}</div>
+            <div class="panel-pinyin"> ${py} </div>
             `;
         }else{
             cell.textContent = item;
