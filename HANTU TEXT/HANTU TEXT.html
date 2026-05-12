@@ -200,8 +200,24 @@ button {
     background:#2a2a2a;
 }
 
+.panel-item.show-pinyin{
+    height:58px;
+    flex-direction:column;
+    justify-content:center;
+    gap:2px;
+}
+
+.panel-pinyin{
+    font-size:11px;
+    color:#9ca3af;
+    font-family:Roboto,sans-serif;
+    line-height:1;
+    margin-top:-2px;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/index.js"></script>
 </head>
 
 <body>
@@ -230,6 +246,7 @@ letter-spacing:.5px;
     <button onclick="startReview()">🧠 Review </button>
     <button id="confirmReviewBtn" style="display:none;" onclick="confirmReview()">Xác nhận</button>
     <button id="groupBtn">🗃️ Nhóm chữ</button>
+    <button id="togglePinyinBtn">🔤 Pinyin</button>
     <button id="backHomeBtn" style="display:none;">⬅️ Trang chính</button>
 </div>
 
@@ -338,10 +355,37 @@ function getCurrentData(){
     
 let data = Array.from(new Set(JSON.parse(localStorage.getItem("hanzi")) || []));
 let pinned = null;
+let showPinyin =
+JSON.parse(localStorage.getItem("showPinyin") || "false");
 
 function save() {
     localStorage.setItem("hanzi", JSON.stringify(data));
 }
+
+function updatePinyinButton(){
+
+    const btn =
+    document.getElementById("togglePinyinBtn");
+
+    btn.textContent =
+    showPinyin
+    ? "🔤 Ẩn Pinyin"
+    : "🔤 Pinyin";
+}
+
+document.getElementById("togglePinyinBtn").onclick = ()=>{
+
+    showPinyin = !showPinyin;
+
+    localStorage.setItem(
+        "showPinyin",
+        JSON.stringify(showPinyin)
+    );
+
+    updatePinyinButton();
+
+    renderPanel();
+};
 
 function isHan(char) {
     return /[\u4e00-\u9fff]/.test(char);
@@ -867,8 +911,25 @@ function renderPanel(){
     arr.forEach((item,index)=>{
 
         const cell = document.createElement("div");
-        cell.className = "panel-item";
-        cell.textContent = item;
+        
+        cell.className =
+        showPinyin
+        ? "panel-item show-pinyin"
+        : "panel-item";
+        
+        if(showPinyin){
+        
+            const py = pinyinPro.pinyin(item,{
+                toneType:"symbol"
+            });
+        
+            cell.innerHTML = `
+            <div>${item}</div>
+            <div class="panel-pinyin">${py}</div>
+            `;
+        }else{
+            cell.textContent = item;
+        }
 
         cell.onclick = ()=>{
         
@@ -955,8 +1016,9 @@ function renderPanel(){
                 saveGroups();
             }
 
-            render();
-            renderPanel();
+                updatePinyinButton();
+                render();
+                renderPanel();
         };
 
         cell.appendChild(del);
