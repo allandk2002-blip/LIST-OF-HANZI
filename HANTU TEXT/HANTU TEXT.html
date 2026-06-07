@@ -422,6 +422,21 @@ font-weight:500;
     </div>
 </div>
 
+<div id="editModal" class="edit-modal">
+    <div class="edit-content">
+        <h3>📄 Chỉnh sửa danh sách chữ</h3>
+        <p>Xóa hoặc thêm chữ Hán tùy ý. Sau khi lưu, chương trình sẽ tự sắp xếp lại và loại trừ trùng lặp.</p>
+        <textarea id="editTextarea" spellcheck="false"></textarea>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span class="edit-count" id="editCount">0 chữ</span>
+            <div class="edit-actions">
+                <button id="editCancelBtn">Hủy</button>
+                <button id="editSaveBtn">💾 Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 
 let groups = JSON.parse(localStorage.getItem("hanziGroups") || "{}");
@@ -1583,19 +1598,5 @@ document.getElementById("editModal").onclick = (e) => {
 };
     
 </script>
-<div id="editModal" class="edit-modal">
-    <div class="edit-content">
-        <h3>📄 Chỉnh sửa danh sách chữ</h3>
-        <p>Xóa hoặc thêm chữ Hán tùy ý. Sau khi lưu, chương trình sẽ tự sắp xếp lại và loại trừ trùng lặp.</p>
-        <textarea id="editTextarea" spellcheck="false"></textarea>
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-            <span class="edit-count" id="editCount">0 chữ</span>
-            <div class="edit-actions">
-                <button id="editCancelBtn">Hủy</button>
-                <button id="editSaveBtn">💾 Lưu</button>
-            </div>
-        </div>
-    </div>
-</div>
 </body>
 </html>
