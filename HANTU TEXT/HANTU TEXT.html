@@ -17,7 +17,6 @@ body {
     font-family: sans-serif;
     background: #111;
     color: #eee;
-    margin-bottom: 80px;
 }
 
 .container {
@@ -27,6 +26,7 @@ body {
     padding-top: 40px;
 }
 
+    margin-bottom: 80px;
 /* INPUT */
 #input {
     width: 100%;
@@ -215,6 +215,92 @@ button {
     margin-top:-2px;
 }
 
+/* ===== EDIT TEXT MODAL ===== */
+.edit-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.edit-content {
+    width: 700px;
+    max-width: 95vw;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.edit-content h3 {
+    margin: 0;
+    color: #eee;
+    font-size: 16px;
+    font-weight: 500;
+    font-family: Roboto, sans-serif;
+}
+
+.edit-content p {
+    margin: 0;
+    color: #888;
+    font-size: 13px;
+    font-family: Roboto, sans-serif;
+}
+
+#editTextarea {
+    width: 100%;
+    height: 240px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    padding: 12px;
+    font-size: 22px;
+    font-family: 'FZKai', 'KaiTi', serif;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+    line-height: 1.7;
+    letter-spacing: 2px;
+}
+
+#editTextarea:focus {
+    border-color: #666;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.edit-actions button {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#editSaveBtn {
+    background: #1f7a3f;
+    color: white;
+}
+
+#editCancelBtn {
+    background: #333;
+    color: #ccc;
+}
+
+.edit-count {
+    font-size: 13px;
+    color: #666;
+    font-family: Roboto, sans-serif;
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pinyin-pro/dist/index.js"></script>
@@ -242,6 +328,7 @@ letter-spacing:.5px;
     <button onclick="render()">🔀 Shuffle</button>
     <button onclick="togglePanel()">🗂️ Quản lý</button>
     <button onclick="copyAll()">📋 Copy All</button>
+    <button id="editTextBtn">📄 Văn bản</button>
     <button id="randomBtn">🎲 Random</button>
     <button onclick="startReview()">🧠 Review </button>
     <button id="confirmReviewBtn" style="display:none;" onclick="confirmReview()">Xác nhận</button>
@@ -1431,6 +1518,87 @@ window.addEventListener("resize", positionGroupMenu);
 window.addEventListener("scroll", positionContextMenu);
 window.addEventListener("resize", positionContextMenu);
 
+/* =======================
+   EDIT TEXT MODAL
+======================= */
+
+document.getElementById("editTextBtn").onclick = () => {
+    const modal = document.getElementById("editModal");
+    const textarea = document.getElementById("editTextarea");
+
+    // Hiển thị toàn bộ data theo dạng cách nhau dấu cách
+    textarea.value = data.join(" ");
+
+    updateEditCount();
+
+    modal.style.display = "flex";
+    textarea.focus();
+};
+
+function updateEditCount() {
+    const textarea = document.getElementById("editTextarea");
+    const text = textarea.value;
+    const chars = [...text].filter(c => isHan(c));
+    const unique = new Set(chars);
+    document.getElementById("editCount").textContent =
+        `${unique.size} chữ (${chars.length} ký tự Hán)`;
+}
+
+document.getElementById("editTextarea").addEventListener("input", updateEditCount);
+
+document.getElementById("editSaveBtn").onclick = () => {
+    const textarea = document.getElementById("editTextarea");
+    const text = textarea.value;
+
+    // Tách tất cả chữ Hán, giữ thứ tự xuất hiện, loại trùng
+    const chars = [];
+    const seen = new Set();
+    for (const c of text) {
+        if (isHan(c) && !seen.has(c)) {
+            seen.add(c);
+            chars.push(c);
+        }
+    }
+
+    data = chars;
+
+    // Cập nhật các nhóm: xóa những chữ không còn trong data
+    Object.keys(groups).forEach(g => {
+        groups[g] = groups[g].filter(x => seen.has(x));
+    });
+
+    save();
+    saveGroups();
+    render();
+    renderPanel();
+
+    document.getElementById("editModal").style.display = "none";
+};
+
+document.getElementById("editCancelBtn").onclick = () => {
+    document.getElementById("editModal").style.display = "none";
+};
+
+document.getElementById("editModal").onclick = (e) => {
+    if (e.target.id === "editModal") {
+        document.getElementById("editModal").style.display = "none";
+    }
+};
+    
 </script>
+<div id="editModal" class="edit-modal">
+    <div class="edit-content">
+        <h3>📄 Chỉnh sửa danh sách chữ</h3>
+        <p>Xóa hoặc thêm chữ Hán tùy ý. Sau khi lưu, chương trình sẽ tự sắp xếp lại và loại trừ trùng lặp.</p>
+        <textarea id="editTextarea" spellcheck="false"></textarea>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span class="edit-count" id="editCount">0 chữ</span>
+            <div class="edit-actions">
+                <button id="editCancelBtn">Hủy</button>
+                <button id="editSaveBtn">💾 Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
