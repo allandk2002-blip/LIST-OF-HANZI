@@ -1526,11 +1526,8 @@ document.getElementById("editTextBtn").onclick = () => {
     const modal = document.getElementById("editModal");
     const textarea = document.getElementById("editTextarea");
 
-    // Hiển thị toàn bộ data theo dạng cách nhau dấu cách
     textarea.value = data.join(" ");
-
     updateEditCount();
-
     modal.style.display = "flex";
     textarea.focus();
 };
@@ -1546,11 +1543,11 @@ function updateEditCount() {
 
 document.getElementById("editTextarea").addEventListener("input", updateEditCount);
 
-document.getElementById("editSaveBtn").onclick = () => {
+document.getElementById("editSaveBtn").onclick = (e) => {
+    e.stopPropagation();
     const textarea = document.getElementById("editTextarea");
     const text = textarea.value;
 
-    // Tách tất cả chữ Hán, giữ thứ tự xuất hiện, loại trùng
     const chars = [];
     const seen = new Set();
     for (const c of text) {
@@ -1562,7 +1559,6 @@ document.getElementById("editSaveBtn").onclick = () => {
 
     data = chars;
 
-    // Cập nhật các nhóm: xóa những chữ không còn trong data
     Object.keys(groups).forEach(g => {
         groups[g] = groups[g].filter(x => seen.has(x));
     });
@@ -1575,7 +1571,8 @@ document.getElementById("editSaveBtn").onclick = () => {
     document.getElementById("editModal").style.display = "none";
 };
 
-document.getElementById("editCancelBtn").onclick = () => {
+document.getElementById("editCancelBtn").onclick = (e) => {
+    e.stopPropagation();
     document.getElementById("editModal").style.display = "none";
 };
 
